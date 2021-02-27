@@ -1,6 +1,6 @@
 USE [master]
 GO
-/****** Object:  StoredProcedure [dbo].[Metin_BenutzerGenerator]    Script Date: 26.02.2021 12:21:39 ******/
+/****** Object:  StoredProcedure [dbo].[Metin_BenutzerGenerator]    Script Date: 28.02.2021 00:16:10 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -10,14 +10,14 @@ ALTER              PROCEDURE [dbo].[Metin_BenutzerGenerator]
 (	
 	@inUserId		decimal(11,0)
 	--	
-	,@inBenutzerKennung char(40)                                                                                           
+	,@inBenutzerKennung char(80)                                                                                           
 	,@inPassWort char(40)                                                                                                                                                                                      
-	,@inBenutzerName char(80)                                                                                              
+	,@inBenutzerName char(40)                                                                                              
 	,@inUserEMail varchar(255)                                                                                            
 	,@inUserTelefon varchar(255)                                                                        
-	,@inANSFId decimal(11) 
+	,@inANSFId decimal(11,0) 
                                                                                                                                                                                                                                                                                                                                                                                   
-	,@inUGRPId decimal(11)  
+	,@inUGRPId decimal(11,0)  
 	--
 	,@outInfo		nvarchar(4000) output
 	,@outMeldung	nvarchar(4000) output
@@ -42,55 +42,16 @@ DECLARE @parModulName nvarchar(128)
 -- Parameter Programmsteuerung
 ----------------------------------------------*
 DECLARE	@flag		INT
-DECLARE	@SQL1ERR	INT
-DECLARE	@SQL2ERR	INT
-DECLARE	@SQL3ERR	INT
-DECLARE	@SQL4ERR	INT
-DECLARE	@SQL5ERR	INT
-DECLARE	@SQL6ERR	INT
-DECLARE	@SQL7ERR	INT
-DECLARE	@SQL8ERR	INT
-DECLARE	@SQL9ERR	INT
-DECLARE	@SQL10ERR	INT
-DECLARE	@SQL11ERR	INT
-DECLARE	@SQL12ERR	INT
-DECLARE	@SQL13ERR	INT
-DECLARE	@SQL14ERR	INT
-DECLARE	@SQL15ERR	INT
 -----------------------
-DECLARE	@ROWS1		INT
-DECLARE	@ROWS2		INT
-DECLARE	@ROWS3		INT
-DECLARE	@ROWS4		INT
-DECLARE	@ROWS5		INT
-DECLARE	@ROWS6		INT
-DECLARE	@ROWS7		INT
-DECLARE	@ROWS8		INT
-DECLARE	@ROWS9		INT
-DECLARE	@ROWS10		INT
-DECLARE	@ROWS11		INT
-DECLARE	@ROWS12		INT
-DECLARE	@ROWS13		INT
-DECLARE	@ROWS14		INT
-DECLARE	@ROWS15		INT
 ----------------------------------------------*
--- CATCH Error Handling
-----------------------------------------------*
-DECLARE @parERROR_NUMBER		int
-DECLARE @parERROR_SEVERITY		int
-DECLARE @parERROR_STATE			int
-DECLARE @parERROR_PROCEDURE		varchar(max)
-DECLARE @parERROR_LINE			varchar(max)
-DECLARE @parERROR_MESSAGE		varchar(max)
-----------------------------------------------*
--- _USER    
+-- deklaration werte aus der tabelle _USER    
 ----------------------------------------------*
 DECLARE @parUSERUSERId decimal(11,0)
 DECLARE @parUSERBenutzerKennung char(40)
 DECLARE @parUSERPassWort char(40)
 DECLARE @parUSERBenutzerName char(80)
-DECLARE @parUSERUserMarkeErstellung datetime
-SET @parUSERUserMarkeErstellung = GETDATE()
+DECLARE @parUSERZeitMarkeErstellung datetime
+SET @parUSERZeitMarkeErstellung = GETDATE()
 --
 DECLARE @parInBenutzerKennung char(40)                                                                                          
 DECLARE @parInPassWort char(40)                                                                                                   
@@ -111,7 +72,7 @@ DECLARE @parAnzahlBenutzer int = 0
 DECLARE @RESULT INT  = 0
 
 ----------------------------------------------*
--- [_Anschriften]
+-- [deklaration werte aus der tabelle _Anschriften]
 ----------------------------------------------*
 Declare @parInName1 varchar (255)
 		,@parInName2 varchar (255)
@@ -153,58 +114,14 @@ BEGIN
 			,@parUSERBenutzerKennung = BenutzerKennung -- char(40)
 			,@parUSERPassWort = BenutzerKennung -- char(40)
 			,@parUSERBenutzerName = BenutzerName -- char(80)
-			,@parUSERUserMarkeErstellung = UserMarkeErstellung -- decimal(11,0)
+			,@parUSERZeitMarkeErstellung = ZeitMarkeErstellung -- decimal(11,0)
 		FROM   [master].[dbo].[_USER]
 		WITH   (NOLOCK)
 		WHERE  USERId = @inUSERId
 		---
-		SELECT @SQL1ERR = @@ERROR, @ROWS1 = @@ROWCOUNT
-		---
-		IF @SQL1ERR <> 0
-		BEGIN
-			SET @flag = @flag + 1024
-			SET @outResult = 5024			-- Farbe rot
-			SET @outMeldung = LTRIM(RTRIM(@outMeldung)) + 'A B B R U C H ! [SQLFehler bei ZugrIFf auf _USER]' + '; '
-		END
-		---
-		IF @ROWS1 < 1 
-		BEGIN
-		----------------------------------
-		--- wir haben keine Rows gefunden
-		----------------------------------
-			SET @flag = @flag + 1024
-			SET @outResult =  5025			-- Farbe rot
-			SET @outMeldung = LTRIM(RTRIM(@outMeldung)) + 'A B B R U C H ! [Benutzer nicht gefunden]' + '; '
-		END
-		---
-		IF @ROWS1 > 1 
-		BEGIN
-		----------------------------------
-		--- wir haben zuviele Rows gefunden
-		----------------------------------
-			SET @flag = @flag + 1024
-			SET @outResult = 5028			-- Farbe rot
-			SET @outMeldung = LTRIM(RTRIM(@outMeldung)) + 'A B B R U C H ! 5025 [Benutzer mehrdeutig]' + '; '
-		END
-		---
-		IF @ROWS1 = 1
-		BEGIN
-			SET @flag = @flag + 1024
-			SET @outResult = 5029			-- Farbe rot
-			SET @outMeldung = LTRIM(RTRIM(@outMeldung)) + 'A B B R U C H ! 5029 [Benutzer ISt gelöscht]' + '; '
-		END
-		---
 	END TRY
 	---
 	BEGIN CATCH
-		---
-		SELECT
-			@parERROR_NUMBER		= ERROR_NUMBER()				-- int
-			,@parERROR_SEVERITY		= ERROR_SEVERITY() 				-- int
-			,@parERROR_STATE		= ERROR_STATE() 				-- int
-			,@parERROR_PROCEDURE	= ERROR_PROCEDURE()				-- varchar(max)
-			,@parERROR_LINE			= ERROR_LINE() 					-- varchar(max)
-			,@parERROR_MESSAGE		= ERROR_MESSAGE()				-- varchar(max)
 		---
 		SET @flag				= @flag + 1024
 		Set @outResult			= 5030				-- Farbe rot
@@ -259,7 +176,7 @@ BEGIN
 		IF NOT @inUserId IS NULL
 		and @inUserId <> '0'
 		BEGIN
-				SET						@parInUSERId = @inUSERId
+				SET						@parInUSERId = @inUserId
 		END
 		---
 		IF NOT @InUGRPId IS NULL
@@ -271,14 +188,6 @@ BEGIN
 	END TRY
 	---
 	BEGIN CATCH
-		---
-		SELECT
-			@parERROR_NUMBER		= ERROR_NUMBER()				-- int
-			,@parERROR_SEVERITY		= ERROR_SEVERITY() 				-- int
-			,@parERROR_STATE		= ERROR_STATE() 				-- int
-			,@parERROR_PROCEDURE	= ERROR_PROCEDURE()				-- varchar(max)
-			,@parERROR_LINE			= ERROR_LINE() 					-- varchar(max)
-			,@parERROR_MESSAGE		= ERROR_MESSAGE()				-- varchar(max)
 		---
 		SET @flag				= @flag + 1024
 		Set @outResult			= 5040				-- Farbe rot
@@ -295,7 +204,7 @@ BEGIN
 	BEGIN TRY
 		---
 		------------------------------------------
-		--  BenutzerNamen prüfen ob vorhanden IST
+		--  BenutzerNamen prüfen ob Benutzer vorhanden IST
 		------------------------------------------
 		SET @RESULT = 0
 		SET @RESULT = (SELECT  COUNT(*) 
@@ -303,10 +212,23 @@ BEGIN
 						WITH (NOLOCK)
 						WHERE BenutzerName = @inBenutzerName)
 		---------------------------------------------
-		SET @RESULT = 0
 		IF @RESULT > 0
 		BEGIN
 			PRINT 'ACHTUNG!!! BENUTZERNAME VORHANDEN!'
+			SELECT * FROM _USER
+			WITH(NOLOCK)
+			WHERE  BenutzerName = @inBenutzerName
+		END
+		---
+		SET @RESULT = 0
+		SET @RESULT = (SELECT  COUNT(*) 
+						FROM _USER
+						WITH (NOLOCK)
+						WHERE BenutzerName = @inBenutzerName)
+		---------------------------------------------
+		IF @RESULT = 0
+		BEGIN
+			PRINT 'ACHTUNG!!! BENUTZERNAME NICH VORHANDEN!'
 			SELECT * FROM _USER
 			WITH(NOLOCK)
 			WHERE  BenutzerName = @inBenutzerName
@@ -321,7 +243,6 @@ BEGIN
 						WITH (NOLOCK)
 						WHERE BenutzerKennung = @inBenutzerKennung)
 		---------------------------------------------
-		SET @RESULT = 0
 		IF @RESULT > 0
 		BEGIN
 			PRINT 'ACHTUNG!!! BENUTZERKENNUNG VORHANDEN!'
@@ -330,17 +251,23 @@ BEGIN
 			WHERE BenutzerKennung = @inBenutzerKennung
 		END
 		---
+		SET @RESULT = 0
+		SET @RESULT = (SELECT  COUNT(*)
+						FROM _USER
+						WITH (NOLOCK)
+						WHERE BenutzerKennung = @inBenutzerKennung)
+		---------------------------------------------
+		IF @RESULT = 0
+		BEGIN
+			PRINT 'BENUTZERKENNUNG NICHT VORHANDEN!'
+			SELECT  * FROM _USER
+			WITH (NOLOCK)
+			WHERE BenutzerKennung = @inBenutzerKennung
+		END
+		---
 	END TRY
 	---
 	BEGIN CATCH
-		---
-		SELECT
-			@parERROR_NUMBER		= ERROR_NUMBER()				-- int
-			,@parERROR_SEVERITY		= ERROR_SEVERITY() 				-- int
-			,@parERROR_STATE		= ERROR_STATE() 				-- int
-			,@parERROR_PROCEDURE	= ERROR_PROCEDURE()				-- varchar(max)
-			,@parERROR_LINE			= ERROR_LINE() 					-- varchar(max)
-			,@parERROR_MESSAGE		= ERROR_MESSAGE()				-- varchar(max)
 		---
 		SET @flag				= @flag + 1024
 		Set @outResult			= 5050				-- Farbe rot
@@ -355,35 +282,36 @@ END
 IF @flag = 0
 BEGIN
 	BEGIN TRY
-		SET @RESULT = 0
 		---
 		IF @RESULT = 0
 		BEGIN
 		---
-			INSERT INTO _USER(BenutzerKennung, PassWort, BenutzerName, UserEmail, UserTelefon)       
-			VALUES (@inBenutzerKennung, @inPassWort, @inBenutzerName,@inUserEMail,@inUserTelefon)                                                                                                                                                                                                                                                                                                                                                                                                                                  
-			---
-			-----------------------------
-			--  ErgebnIS anzeigen 
-			-----------------------------                                                                                                       
-			SET @inUserId = (SELECT USERId FROM _USER WITH (NOLOCK) WHERE (USERId = @@IDENTITY))             
+			INSERT INTO _USER(BenutzerKennung, PassWort, BenutzerName, UserEmail, UserTelefon, ZeitMarkeErstellung)       
+			VALUES (@inBenutzerKennung, @inPassWort, @inBenutzerName,@inUserEMail,@inUserTelefon,GETDATE())                                                                                                                                                                                                                                                                                                                                                                                                                                  
+			--- 
+		------------------------------------------
+		---- UserId auf die ID der tabelle _USER initialisieren
+		------------------------------------------
+			set @inUserId = (select UserID
+							 from _USER 
+							 where BenutzerKennung = @inBenutzerKennung)
+		END
+		ELSE
+		BEGIN
+		---
+		set @flag				= @flag + 1024
+		Set @outResult			= 5055				-- Farbe rot
+		Set @outMeldung			= LTRIM(RTRIM(@outMeldung)) + 'A B B R U C H ! 5055 [Dieser Benutzer Existiert Bereits ]]'							+ '; '
+		---
 		END
 		---
 	END TRY
 		---
 	BEGIN CATCH
 		---
-		SELECT
-			@parERROR_NUMBER		= ERROR_NUMBER()				-- int
-			,@parERROR_SEVERITY		= ERROR_SEVERITY() 				-- int
-			,@parERROR_STATE		= ERROR_STATE() 				-- int
-			,@parERROR_PROCEDURE	= ERROR_PROCEDURE()				-- varchar(max)
-			,@parERROR_LINE			= ERROR_LINE() 					-- varchar(max)
-			,@parERROR_MESSAGE		= ERROR_MESSAGE()				-- varchar(max)
-		---
-		SET @flag				= @flag + 1024
+		set @flag				= @flag + 1024
 		Set @outResult			= 5060				-- Farbe rot
-		Set @outMeldung			= LTRIM(RTRIM(@outMeldung)) + 'A B B R U C H ! 5060 [Fehler beim insert zur _USER tabelle ]]'							+ '; '
+		Set @outMeldung			= LTRIM(RTRIM(@outMeldung)) + 'A B B R U C H ! 5060 [Fehler beim insert zur _USER Tabelle ]]'							+ '; '
 		---
 	END CATCH
 END		
@@ -394,15 +322,18 @@ END
 -----------------------------------------------------------------------------------------*		
 IF @flag = 0
 BEGIN
+---
+	 
+	---
 	BEGIN TRY
 		IF @inUGRPId <> '24'
-		BEGIN
-			INSERT INTO _User2ANSF(USERId, ANSFId)                                                                                
-				VALUES (@inUSERId, @inANSFId);     
+		BEGIN 
+		
+			INSERT INTO _User2ANSF(USERId, ANSFId,BenutzerKennung,ZeitMarkeErstellung)                                                                                
+				VALUES (@inUSERId, @inANSFId,@inBenutzerKennung,GETDATE())     
 			-----------------------------
 			--  ErgebnIS anzeigen 
-			-----------------------------	
-			  
+			-----------------------------	 
 			SELECT USERId, ANSFId 
 			FROM _User2ANSF 
 			WITH(NOLOCK)
@@ -412,14 +343,6 @@ BEGIN
 	END TRY
 		---
 	BEGIN CATCH
-		---
-		SELECT
-			@parERROR_NUMBER		= ERROR_NUMBER()				-- int
-			,@parERROR_SEVERITY		= ERROR_SEVERITY() 				-- int
-			,@parERROR_STATE		= ERROR_STATE() 				-- int
-			,@parERROR_PROCEDURE	= ERROR_PROCEDURE()				-- varchar(max)
-			,@parERROR_LINE			= ERROR_LINE() 					-- varchar(max)
-			,@parERROR_MESSAGE		= ERROR_MESSAGE()				-- varchar(max)
 		---
 		SET @flag				= @flag + 1024
 		Set @outResult			= 5070				-- Farbe rot
@@ -434,22 +357,22 @@ END
 IF @flag = 0
 BEGIN
 	BEGIN TRY
-		INSERT INTO _USER2UGRP(USERId, UGRPId)                                                                                     
-			VALUES (@inUSERId, @inUGRPId);                                                                                                
+		INSERT INTO _USER2UGRP(USERId, UGRPId,ZeitMarkeErstellung)                                                                                     
+			VALUES (@inUSERId, @inUGRPId,GETDATE());                                                                                                
         ---
 		-----------------------------
 		-- Berechtigunen1
 		-----------------------------
 		IF @inUGRPId = '24'
 		BEGIN
-			INSERT INTO _USER2UGRP(USERId, UGRPId)
-				VALUES (@inUSERId, '30')
-			INSERT INTO _USER2UGRP(USERId, UGRPId)                                                                                  
-				VALUES (@inUSERId, '32') 
-			INSERT INTO _USER2UGRP(USERId, UGRPId)                                                                                  
-				VALUES (@inUSERId, '33')
-			INSERT INTO _USER2UGRP(USERId, UGRPId)                                                                                  
-				VALUES (@inUSERId, '50')
+			INSERT INTO _USER2UGRP(USERId, UGRPId,ZeitMarkeErstellung)
+				VALUES (@inUSERId, '30',GETDATE())
+			INSERT INTO _USER2UGRP(USERId, UGRPId,ZeitMarkeErstellung)                                                                                  
+				VALUES (@inUSERId, '32',GETDATE()) 
+			INSERT INTO _USER2UGRP(USERId, UGRPId,ZeitMarkeErstellung)                                                                                  
+				VALUES (@inUSERId, '33',GETDATE())
+			INSERT INTO _USER2UGRP(USERId, UGRPId,ZeitMarkeErstellung)                                                                                  
+				VALUES (@inUSERId, '50',GETDATE())
 		END
 		---
 		-----------------------------
@@ -457,8 +380,8 @@ BEGIN
 		-----------------------------
 		IF @inUGRPId = '66' or @inUGRPId = '67'                                                                              
 		BEGIN
-			INSERT INTO _USER2UGRP(USERId, UGRPId)                                                                                  
-			VALUES (@inUSERId, '143')
+			INSERT INTO _USER2UGRP(USERId, UGRPId,ZeitMarkeErstellung)                                                                                  
+			VALUES (@inUSERId, '143', GETDATE())
 		END
         ---
 		-------------------------------------
@@ -466,8 +389,8 @@ BEGIN
 		-------------------------------------
 		IF @inUGRPId = '77'
 		BEGIN
-			INSERT INTO _USER2UGRP(USERId, UGRPId)
-			VALUES (@inUSERId, '101')
+			INSERT INTO _USER2UGRP(USERId, UGRPId, ZeitMarkeErstellung)
+			VALUES (@inUSERId, '101',GETDATE())
 		END
 		---
 		----------------------------------------------------------
@@ -475,8 +398,8 @@ BEGIN
 		----------------------------------------------------------
 		IF @inUGRPId = '236'
 		BEGIN
-			INSERT INTO _USER2UGRP(USERId, UGRPId)
-			VALUES (@inUserId, 236)
+			INSERT INTO _USER2UGRP(USERId, UGRPId,ZeitMarkeErstellung)
+			VALUES (@inUserId, 236,GETDATE())
 		END
 		---
 		-----------------------------
@@ -484,8 +407,8 @@ BEGIN
 		-----------------------------
 		IF @inUGRPId = '369'
 		BEGIN
-			INSERT INTO _USER2UGRP(USERId, UGRPId)
-			VALUES (@inUSERId, '373')
+			INSERT INTO _USER2UGRP(USERId, UGRPId, ZeitMarkeErstellung)
+			VALUES (@inUSERId, '373', GETDATE())
 		END
 		---
 		-----------------------------
@@ -499,14 +422,6 @@ BEGIN
 	END TRY
 		---
 	BEGIN CATCH
-		---
-		SELECT
-			@parERROR_NUMBER		= ERROR_NUMBER()				-- int
-			,@parERROR_SEVERITY		= ERROR_SEVERITY() 				-- int
-			,@parERROR_STATE		= ERROR_STATE() 				-- int
-			,@parERROR_PROCEDURE	= ERROR_PROCEDURE()				-- varchar(max)
-			,@parERROR_LINE			= ERROR_LINE() 					-- varchar(max)
-			,@parERROR_MESSAGE		= ERROR_MESSAGE()				-- varchar(max)
 		---
 		SET @flag				= @flag + 1024
 		Set @outResult			= 5080				-- Farbe rot
