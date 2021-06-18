@@ -1,4 +1,4 @@
-﻿using BenutzerGenerator_MetinDereli.Properties;
+using BenutzerGenerator_MetinDereli.Properties;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -13,13 +13,16 @@ namespace BenutzerGenerator_MetinDereli
 {
     public partial class FrmBenutzerGenerator : Form
     {
-        //Einbinden der methoden aus den Klassen
+        //aufrufen der Klassen
         public clsFehlerMeldungen clsFehler = new clsFehlerMeldungen();
-        //--
-        public Funktionen.clsfunc clsfunc = new Funktionen.clsfunc();
-        //--
+        public Funktionen.ClsUserGenFunc ClsUserGenFunc = new Funktionen.ClsUserGenFunc();
+        public Funktionen.ClsSlideDrawFunc ClsSlideDraw = new Funktionen.ClsSlideDrawFunc();
+        public Funktionen.clsPasswordFunc clsfuncPassword = new Funktionen.clsPasswordFunc();
+        public Funktionen.ClsBerechtigung ClsBerechtigung = new Funktionen.ClsBerechtigung();
+        public DatenbaseBinding.ClsDatenbindung ClsDatenbindung = new DatenbaseBinding.ClsDatenbindung();
+        
 
-        //Primary Keys der verschiedenen Tabellen deklariert
+        //PrimaryKeys der verschiedenen Tabellen
         public decimal parInUSERId = 0;
         public decimal parInUGRPId = 0;
         public decimal parInANSFId = 0;
@@ -44,11 +47,13 @@ namespace BenutzerGenerator_MetinDereli
         // Drawer Bool Initialisiert
         public bool HidenSlideMenu = true;
         public bool HidenSlideDropDown = true;
+        public bool hidenSlidePswrtDropDown = true;
         //--
 
         // Panel Drawer die breiten größe Deklariert
         public int pnlWidthDrawer;
         public int pnlHeightDropDown;
+        public int pnlHeightDropDownPasswort;
         //--
 
         public FrmBenutzerGenerator()
@@ -58,6 +63,7 @@ namespace BenutzerGenerator_MetinDereli
             this.StartPosition = FormStartPosition.CenterScreen;
             pnlSlideMenu.Width = pnlWidthDrawer;
             pnlDropdown.Height = pnlHeightDropDown;
+            pnlPasswordDropdown.Height = pnlHeightDropDownPasswort;
             //--
         }
 
@@ -74,11 +80,11 @@ namespace BenutzerGenerator_MetinDereli
                 else
                 {
                     //Methode für die Benutzer Generierung
-                    clsfunc._benutzerGenerieren(this);
+                    Funktionen.ClsUserGenFunc clsUserGen = new Funktionen.ClsUserGenFunc();
                     //--
 
                     //Methode für die Passwort Generierung
-                    clsfunc._passwortGenerieren(this);
+                    clsfuncPassword._passwortGenerieren();
                     //--
                 }
             }
@@ -90,7 +96,7 @@ namespace BenutzerGenerator_MetinDereli
 
         private void timeMenu_Tick(object sender, EventArgs e)
         {
-            clsfunc._drawerSlideMenu(this);
+            ClsSlideDraw._drawerSlideMenu();
         }
 
         private void BtnStartMenu_Click(object sender, EventArgs e)
@@ -130,31 +136,14 @@ namespace BenutzerGenerator_MetinDereli
         private void time2Dropdown_Tick(object sender, EventArgs e)
         {
             // Funktion der das DropDown Menu Öffnet und schließt
-            clsfunc._dropDownMenu(this);
+            ClsSlideDraw._dropDownMenu();
             //--
         }
 
         private void btnBenutzerInsert_Click(object sender, EventArgs e)
         {
-            //eine Info für die Letzte erstellung eines 
-            lblLtztBenutzerName.Text = "BenutzerName:\n" + parInBenutzerKennung;
-            lblPswrtLetzteErstellung.Text = "Passwort:\n" + parInPassWort;
-            lblLtztEmail.Text = "E-mail Adresse:\n" + parInEmail;
-            lblLtztTelefon.Text = "Telefon:\n" + parInTelefon;
-            //--
-            
-            //Methode Für die einbindungen der Berechtigungen an den RadioButton
-            clsfunc._uGRPBerechtigungee(this);
-            //--
-
-            // BenutzerName in die Parameter Einbinden
-            parInBenutzerKennung = txtVorname.Text.Trim() + " " + txtNachname.Text.Trim();
-            //--
-
-            //Benutzer Daten einbinden in die StoredProcedure
-            DataSets.ds_UserTableAdapters._USERTableAdapter ta_User = new DataSets.ds_UserTableAdapters._USERTableAdapter();
-            //--
-
+            ClsDatenbindung.lastValueBinding();
+           
             //Fehler Meldungen
             if (parInBenutzerName == "" | parInBenutzerName == null |
                 parInBenutzerKennung == "" | parInBenutzerKennung == null |
@@ -163,31 +152,39 @@ namespace BenutzerGenerator_MetinDereli
                 parInTelefon == "" | parInTelefon == null |
                 parInUGRPId == 0)
             {
-                clsFehler._BenutzerInsert(this);
+                clsFehler._BenutzerInsert();
             }
             //--
             else
             {
-                // Table Adapter mit Parameter Binden
-                ta_User.Metin_BenutzerGenerator(parInUSERId, parInBenutzerKennung, parInPassWort, parInBenutzerName, parInEmail,
-                                                parInTelefon, parInANSFId, parInUGRPId, ref parOutInfo, ref parOutMeldung, ref parOutResult);
-                // switch case anweisung case 10 = ist gruen
-                switch (parOutResult)
-                {
-                    case 10:
-                    default:
-                        break;
-                }
-                if (parOutResult != 10)
-                {
-                    MessageBox.Show(parOutMeldung.Trim());
-                }
-                //tableadapter schließen
-                ta_User.Dispose();
+                //Benutzer Daten einbinden in die StoredProcedure
+                ClsDatenbindung._dataSetBindung();
+                
                 // aktualisieren der DataGridView
-                this._USERTableAdapter.Fill(this.ds_User._USER);
-                //--
+                _USERTableAdapter.Fill(this.ds_User._USER);
             }
+        }
+
+        private void btnPasswortAEndern_Click(object sender, EventArgs e)
+        {
+            time2ChangePassword.Start();
+        }
+
+        private void time2ChangePassword_Tick(object sender, EventArgs e)
+        {
+            clsfuncPassword._time2PasswortChange();
+        }
+
+        public void tbPasswortZeichen_Scroll(object sender, EventArgs e)
+        {
+            clsfuncPassword._scrollBarPsw();
+        }
+
+        private void btnTabelleLaden_Click(object sender, EventArgs e)
+        {
+            // aktualisieren der DataGridView
+            this._USERTableAdapter.Fill(this.ds_User._USER);
+            //--
         }
     }
 }
